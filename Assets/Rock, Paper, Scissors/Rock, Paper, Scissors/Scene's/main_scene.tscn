@@ -1,0 +1,143 @@
+[gd_scene load_steps=11 format=3 uid="uid://bolp02i0cioie"]
+
+[ext_resource type="Script" path="res://Script's/main_scene.gd" id="1_2qw3j"]
+[ext_resource type="Shader" path="res://Script's/Background.gdshader" id="1_tg3gd"]
+[ext_resource type="Texture2D" uid="uid://bw01l7ce8ixxy" path="res://Asset's/Background.png" id="2_bjdua"]
+[ext_resource type="Texture2D" uid="uid://bmpaoidd6bngi" path="res://Asset's/Cat Hands.png" id="4_mih2o"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0c6tu"]
+shader = ExtResource("1_tg3gd")
+shader_parameter/direction = Vector2(-1, -1)
+shader_parameter/speed_scale = 0.3
+
+[sub_resource type="Animation" id="Animation_usg4p"]
+resource_name = "Hide Hands"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(320, 128), Vector2(320, -32)]
+}
+
+[sub_resource type="Animation" id="Animation_6akiu"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(320, 128)]
+}
+
+[sub_resource type="Animation" id="Animation_s1flo"]
+resource_name = "Show Hands"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(320, -32), Vector2(320, 128)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_yt65y"]
+_data = {
+"Hide Hands": SubResource("Animation_usg4p"),
+"RESET": SubResource("Animation_6akiu"),
+"Show Hands": SubResource("Animation_s1flo")
+}
+
+[sub_resource type="LabelSettings" id="LabelSettings_rkpd6"]
+font_size = 32
+outline_size = 5
+outline_color = Color(0, 0, 0, 1)
+
+[node name="Main Scene" type="Node2D"]
+script = ExtResource("1_2qw3j")
+
+[node name="Background" type="TextureRect" parent="."]
+texture_filter = 1
+material = SubResource("ShaderMaterial_0c6tu")
+offset_right = 642.0
+offset_bottom = 360.0
+texture = ExtResource("2_bjdua")
+stretch_mode = 1
+
+[node name="Cat Hand" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(320, 128)
+rotation = 3.14159
+texture = ExtResource("4_mih2o")
+hframes = 3
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Cat Hand"]
+libraries = {
+"": SubResource("AnimationLibrary_yt65y")
+}
+
+[node name="Buttons" type="Node2D" parent="."]
+
+[node name="Options" type="Node2D" parent="Buttons"]
+
+[node name="Rock" type="Button" parent="Buttons/Options"]
+texture_filter = 1
+offset_left = 128.0
+offset_top = 192.0
+offset_right = 192.0
+offset_bottom = 256.0
+text = "🪨"
+
+[node name="Paper" type="Button" parent="Buttons/Options"]
+texture_filter = 1
+offset_left = 288.0
+offset_top = 192.0
+offset_right = 352.0
+offset_bottom = 256.0
+text = "📜"
+
+[node name="Scissors" type="Button" parent="Buttons/Options"]
+texture_filter = 1
+offset_left = 448.0
+offset_top = 192.0
+offset_right = 512.0
+offset_bottom = 256.0
+text = "✂️"
+
+[node name="Restart" type="Button" parent="Buttons"]
+texture_filter = 1
+offset_left = 256.0
+offset_top = 272.0
+offset_right = 384.0
+offset_bottom = 304.0
+text = "Restart"
+
+[node name="Text" type="Label" parent="Buttons"]
+offset_left = 64.0
+offset_top = 96.0
+offset_right = 576.0
+offset_bottom = 256.0
+label_settings = SubResource("LabelSettings_rkpd6")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="Buttons/Options/Rock" to="." method="_on_rock_pressed"]
+[connection signal="pressed" from="Buttons/Options/Paper" to="." method="_on_paper_pressed"]
+[connection signal="pressed" from="Buttons/Options/Scissors" to="." method="_on_scissors_pressed"]
+[connection signal="pressed" from="Buttons/Restart" to="." method="_on_restart_pressed"]
