@@ -3,6 +3,9 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
 public sealed class TopDownPlayerMovement : MonoBehaviour
 {
+    public enum ControlScheme { WASD, ArrowKeys }
+
+    [SerializeField] private ControlScheme controls = ControlScheme.WASD;
     [SerializeField, Min(0f)] private float moveSpeed = 4f;
     [SerializeField, Min(0.01f)] private float acceleration = 40f;
     [SerializeField, Min(0.01f)] private float deceleration = 60f;
@@ -16,8 +19,12 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        float x = Input.GetAxisRaw("Horizontal"); // if a+d -> 0 // Edit / Project Settings / Input Manager/ axes you can see binding
-        float y = Input.GetAxisRaw("Vertical");
+        // Separate key sets let two local players share one keyboard.
+        bool arrows = controls == ControlScheme.ArrowKeys;
+        float x = (Input.GetKey(arrows ? KeyCode.RightArrow : KeyCode.D) ? 1f : 0f)
+                - (Input.GetKey(arrows ? KeyCode.LeftArrow : KeyCode.A) ? 1f : 0f);
+        float y = (Input.GetKey(arrows ? KeyCode.UpArrow : KeyCode.W) ? 1f : 0f)
+                - (Input.GetKey(arrows ? KeyCode.DownArrow : KeyCode.S) ? 1f : 0f);
         direction = ReadDirection(x, y);
     }
 
