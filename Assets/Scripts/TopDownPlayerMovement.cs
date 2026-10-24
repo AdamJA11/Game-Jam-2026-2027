@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
 public sealed class TopDownPlayerMovement : MonoBehaviour
 {
-    public enum ControlScheme { WASD, ArrowKeys }
+    public enum ControlScheme { WASD, ArrowKeys, IJKL }
 
     [SerializeField] private ControlScheme controls = ControlScheme.WASD;
     [SerializeField, Min(0f)] private float moveSpeed = 4f;
@@ -19,12 +19,13 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        // Separate key sets let two local players share one keyboard.
+        // Separate key sets let local players share one keyboard.
         bool arrows = controls == ControlScheme.ArrowKeys;
-        float x = (Input.GetKey(arrows ? KeyCode.RightArrow : KeyCode.D) ? 1f : 0f)
-                - (Input.GetKey(arrows ? KeyCode.LeftArrow : KeyCode.A) ? 1f : 0f);
-        float y = (Input.GetKey(arrows ? KeyCode.UpArrow : KeyCode.W) ? 1f : 0f)
-                - (Input.GetKey(arrows ? KeyCode.DownArrow : KeyCode.S) ? 1f : 0f);
+        bool ijkl = controls == ControlScheme.IJKL;
+        float x = (Input.GetKey(arrows ? KeyCode.RightArrow : ijkl ? KeyCode.L : KeyCode.D) ? 1f : 0f)
+                - (Input.GetKey(arrows ? KeyCode.LeftArrow : ijkl ? KeyCode.J : KeyCode.A) ? 1f : 0f);
+        float y = (Input.GetKey(arrows ? KeyCode.UpArrow : ijkl ? KeyCode.I : KeyCode.W) ? 1f : 0f)
+                - (Input.GetKey(arrows ? KeyCode.DownArrow : ijkl ? KeyCode.K : KeyCode.S) ? 1f : 0f);
         direction = ReadDirection(x, y);
     }
 
