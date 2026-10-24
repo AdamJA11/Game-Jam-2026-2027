@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;   
+using UnityEngine.SceneManagement;
 
 
 public class Switch_Image : MonoBehaviour
@@ -26,10 +27,17 @@ public class Switch_Image : MonoBehaviour
         {
             targetImage.gameObject.GetComponent<Image>().enabled = false;
             lastImageObject.SetActive(true);
+            StartCoroutine(NextScene());
+
         }
         
         
         targetImage.SetNativeSize();
+    }
+    IEnumerator NextScene()
+    {
+        yield return new WaitForSeconds(6f); 
+        UnityEngine.SceneManagement.SceneManager.LoadScene("SplitScreenTest");
     }
 
 

@@ -5273,7 +5273,7 @@ MonoBehaviour:
     y: -13
     width: 42
     height: 26
-  overviewHold: 5
+  overviewHold: 10
   approachDuration: 2
   normalSize: 3
   framingMargin: 0.5
