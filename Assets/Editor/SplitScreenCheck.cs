@@ -11,6 +11,8 @@ public static class SplitScreenCheck
     public static void Run()
     {
         if (!EditorApplication.isPlaying) return;
+        if (UnityEngine.Object.FindObjectOfType<RandomPlayerSpawns>() != null)
+            RandomSpawnsCheck.ValidateCurrent();
         var follows = UnityEngine.Object.FindObjectsOfType<LocalPlayerCameraFollow>().OrderBy(f => f.name).ToArray();
         Require(follows.Length == 3 && Camera.allCamerasCount == 3, "Exactly three active gameplay cameras.");
         Require(UnityEngine.Object.FindObjectsOfType<AudioListener>().Count(l => l.enabled) == 1, "Exactly one listener.");

@@ -57,9 +57,56 @@ public static class SplitScreenSceneBuilder
                 players[i].GetComponent<SpriteRenderer>().color * new Color(.4f, .4f, .4f, 1), square, map.transform, -5, false);
 
         CreateUI();
+        ConfigureRandomSpawns();
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         Debug.Log("PHASE3_BUILD_OK: " + path);
+    }
+
+    [MenuItem("Game Jam/Set Up Phase 3a Random Spawns")]
+    public static void UpgradeRandomSpawns()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "SplitScreenTest")
+            throw new InvalidOperationException("Open SplitScreenTest before configuring random spawns.");
+        ConfigureRandomSpawns();
+        EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        Debug.Log("PHASE3A_SETUP_OK: named spawn points and one-time shuffle configured.");
+    }
+
+    private static void ConfigureRandomSpawns()
+    {
+        var root = GameObject.Find("SpawnPoints");
+        if (root == null) root = new GameObject("SpawnPoints");
+        Vector2[] defaults = { new Vector2(-12, 6), new Vector2(12, 6), new Vector2(-12, -6) };
+        var points = new Transform[3];
+        var players = new TopDownPlayerMovement[3];
+        var cameras = new LocalPlayerCameraFollow[3];
+        for (int i = 0; i < 3; i++)
+        {
+            string name = "Spawn" + (char)('A' + i);
+            points[i] = root.transform.Find(name);
+            if (points[i] == null)
+            {
+                points[i] = new GameObject(name).transform;
+                points[i].SetParent(root.transform);
+                points[i].position = defaults[i];
+            }
+            players[i] = GameObject.Find(i == 0 ? "Player" : "Player" + (i + 1)).GetComponent<TopDownPlayerMovement>();
+            cameras[i] = GameObject.Find("Player" + (i + 1) + "Camera").GetComponent<LocalPlayerCameraFollow>();
+            var marker = GameObject.Find("SpawnMarker" + (i + 1));
+            if (marker != null)
+            {
+                marker.GetComponent<SpriteRenderer>().color = new Color(.25f, .3f, .36f, 1);
+                marker.transform.SetParent(points[i], true);
+                marker.transform.localPosition = Vector3.zero;
+            }
+        }
+        var spawner = root.GetComponent<RandomPlayerSpawns>();
+        if (spawner == null) spawner = root.AddComponent<RandomPlayerSpawns>();
+        spawner.Configure(players, points, cameras);
+        EditorUtility.SetDirty(spawner);
     }
 
     private static void SetWall(string name, Vector2 position, Vector2 size)
