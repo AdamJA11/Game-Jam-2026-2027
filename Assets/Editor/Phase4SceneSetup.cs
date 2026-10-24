@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public static class Phase4SceneSetup
 {
     [MenuItem("Game Jam/Set Up Phase 4 Hunting")]
+    [MenuItem("Game Jam/Set Up Phase 4a Speed and Colors")]
     public static void Setup()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
@@ -68,7 +69,7 @@ public static class Phase4SceneSetup
             var rect = (RectTransform)labelObject;
             float x = i == 1 ? .5f : 0;
             float y = i == 2 ? 0 : .5f;
-            rect.anchorMin = new Vector2(x, y + .35f);
+            rect.anchorMin = new Vector2(x, y + .33f);
             rect.anchorMax = new Vector2(x + .5f, y + .43f);
             rect.offsetMin = new Vector2(24, 0);
             rect.offsetMax = new Vector2(-24, 0);
@@ -80,8 +81,11 @@ public static class Phase4SceneSetup
             labels[i].resizeTextMaxSize = 25;
             labels[i].alignment = TextAnchor.UpperLeft;
             labels[i].raycastTarget = false;
-            labels[i].color = obj.GetComponent<SpriteRenderer>().color;
-            labels[i].text = "HUNT P" + ((i + 1) % 3 + 1) + "  |  AVOID P" + ((i + 2) % 3 + 1);
+            labels[i].color = Color.white;
+            labels[i].supportRichText = true;
+            string[] hex = new string[3];
+            for (int p = 0; p < 3; p++) hex[p] = ColorUtility.ToHtmlStringRGB(movements[p].GetComponent<SpriteRenderer>().color);
+            labels[i].text = HuntPresentation.InitialLabel(i, hex);
             EditorUtility.SetDirty(labels[i]);
         }
         manager.Configure(intro, combatants, labels);
@@ -93,5 +97,13 @@ public static class Phase4SceneSetup
     {
         int checks = HuntRulesTests.Run();
         Debug.Log("PHASE4_RULES_OK: " + checks + " assertions.");
+    }
+
+    [MenuItem("Game Jam/Check Phase 4a Rules and Labels")]
+    public static void CheckSpeedAndLabels()
+    {
+        int originalChecks = HuntRulesTests.Run();
+        int newChecks = Phase4aTests.Run();
+        Debug.Log("PHASE4A_CHECK_OK: " + newChecks + " speed/label assertions; " + originalChecks + " original combat assertions.");
     }
 }

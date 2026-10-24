@@ -7,6 +7,8 @@ public sealed class HuntRoundManager : MonoBehaviour
     [SerializeField] private CameraIntroduction introduction;
     [SerializeField] private PlayerCombatant[] players = new PlayerCombatant[3];
     [SerializeField] private Text[] statusLabels = new Text[3];
+    [SerializeField, Min(1f)] private float apexSpeedMultiplier = 1.35f;
+    private readonly string[] identityHex = new string[3];
     private int pendingContacts;
     private int touchingContacts;
     private bool failed;
@@ -20,12 +22,20 @@ public sealed class HuntRoundManager : MonoBehaviour
     {
         Rules = new HuntRules();
         if (!ValidateConfiguration(out string error)) { Fail(error); return; }
+        for (int i = 0; i < 3; i++)
+        {
+            identityHex[i] = ColorUtility.ToHtmlStringRGB(players[i].GetComponent<SpriteRenderer>().color);
+            statusLabels[i].supportRichText = true;
+            statusLabels[i].color = Color.white;
+        }
         ApplyState();
     }
 
     public bool ValidateConfiguration(out string error)
     {
         error = null;
+        if (apexSpeedMultiplier < 1f || float.IsNaN(apexSpeedMultiplier) || float.IsInfinity(apexSpeedMultiplier))
+        { error = "Apex Speed Multiplier must be finite and at least 1."; return false; }
         if (introduction == null || players == null || players.Length != 3 || statusLabels == null || statusLabels.Length != 3)
         { error = "Assign the introduction and exactly three combatants/status labels."; return false; }
         for (int i = 0; i < 3; i++)
@@ -88,7 +98,7 @@ public sealed class HuntRoundManager : MonoBehaviour
             bool apex = Rules.ApexId == i;
             bool freeze = Rules.State == HuntRules.Phase.RoundOver || (Rules.State == HuntRules.Phase.Transforming && apex);
             bool canMove = Rules.State != HuntRules.Phase.Opening && !freeze;
-            players[i].ApplyState(Rules.IsAlive(i), canMove, freeze, apex);
+            players[i].ApplyState(Rules.IsAlive(i), canMove, freeze, apex, apexSpeedMultiplier);
             if (Rules.State == HuntRules.Phase.RoundOver)
                 players[i].HoldCamera();
         }
@@ -99,22 +109,9 @@ public sealed class HuntRoundManager : MonoBehaviour
     {
         for (int i = 0; i < 3; i++)
         {
-            string message;
-            if (Rules.State == HuntRules.Phase.RoundOver)
-                message = Rules.WinnerId < 0 ? "DRAW - NO SURVIVORS" : Rules.WinnerId == i ? "YOU WIN" : "ROUND OVER - P" + (Rules.WinnerId + 1) + " WINS";
-            else if (!Rules.IsAlive(i)) message = "ELIMINATED - CAUGHT BY P" + (Rules.KilledBy(i) + 1);
-            else if (Rules.State == HuntRules.Phase.Transforming)
-                message = Rules.ApexId == i ? "TRANSFORMING  " + Rules.TransformRemaining.ToString("0.0") + "s"
-                    : "ESCAPE! P" + (Rules.ApexId + 1) + " IS TRANSFORMING";
-            else if (Rules.State == HuntRules.Phase.FinalChase)
-                message = Rules.ApexId == i ? "APEX - HUNT P" + (SurvivorExcept(i) + 1) : "AVOID APEX P" + (Rules.ApexId + 1);
-            else message = "HUNT P" + ((i + 1) % 3 + 1) + "  |  AVOID P" + ((i + 2) % 3 + 1);
-            statusLabels[i].text = message;
+            statusLabels[i].text = HuntPresentation.Status(Rules, i, identityHex);
         }
     }
-
-    private int SurvivorExcept(int id)
-    { for (int i = 0; i < 3; i++) if (i != id && Rules.IsAlive(i)) return i; return -1; }
 
     private void Fail(string error)
     {

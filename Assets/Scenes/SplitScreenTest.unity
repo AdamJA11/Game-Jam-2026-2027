@@ -17669,7 +17669,7 @@ RectTransform:
   m_Father: {fileID: 1522871424}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.85}
+  m_AnchorMin: {x: 0, y: 0.83000004}
   m_AnchorMax: {x: 0.5, y: 0.93}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -48, y: 0}
@@ -17695,7 +17695,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -17715,7 +17715,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: HUNT P2  |  AVOID P3
+  m_Text: 'HUNT <color=#FF40CC>P2 MAGENTA</color>
+
+    AVOID <color=#4CFF4C>P3 GREEN</color>'
 --- !u!1 &756378585
 GameObject:
   m_ObjectHideFlags: 0
@@ -17915,7 +17917,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.3, g: 1, b: 0.3, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -17935,7 +17937,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: HUNT P1  |  AVOID P2
+  m_Text: 'HUNT <color=#FFEB04>P1 YELLOW</color>
+
+    AVOID <color=#FF40CC>P2 MAGENTA</color>'
 --- !u!222 &779897675
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17959,7 +17963,7 @@ RectTransform:
   m_Father: {fileID: 1522871424}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.35}
+  m_AnchorMin: {x: 0, y: 0.33}
   m_AnchorMax: {x: 0.5, y: 0.43}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -48, y: 0}
@@ -34643,7 +34647,7 @@ RectTransform:
   m_Father: {fileID: 1522871424}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.85}
+  m_AnchorMin: {x: 0.5, y: 0.83000004}
   m_AnchorMax: {x: 1, y: 0.93}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -48, y: 0}
@@ -34669,7 +34673,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.25, b: 0.8, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -34689,7 +34693,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: HUNT P3  |  AVOID P1
+  m_Text: 'HUNT <color=#4CFF4C>P3 GREEN</color>
+
+    AVOID <color=#FFEB04>P1 YELLOW</color>'
 --- !u!1 &1799300159
 GameObject:
   m_ObjectHideFlags: 0
@@ -37735,6 +37741,7 @@ MonoBehaviour:
   - {fileID: 743480073}
   - {fileID: 1791581805}
   - {fileID: 779897674}
+  apexSpeedMultiplier: 1.35
 --- !u!4 &2052922278
 Transform:
   m_ObjectHideFlags: 0

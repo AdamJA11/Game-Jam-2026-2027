@@ -37,9 +37,10 @@ public sealed class PlayerCombatant : MonoBehaviour
         if (visual == null) visual = GetComponent<SpriteRenderer>();
     }
 
-    public void ApplyState(bool alive, bool allowMovement, bool pinPosition, bool apex)
+    public void ApplyState(bool alive, bool allowMovement, bool pinPosition, bool apex, float apexMultiplier = 1f)
     {
         Cache();
+        movement.SetSpeedMultiplier(MovementSpeedModifier.ForCombatState(alive, allowMovement, apex, apexMultiplier));
         if (!alive && !IsEliminated)
         {
             IsEliminated = true;

@@ -11,11 +11,17 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     [SerializeField, Min(0.01f)] private float deceleration = 60f;
     private Rigidbody2D body;
     private Vector2 direction;
+    private readonly MovementSpeedModifier speedModifier = new MovementSpeedModifier();
     public bool InputBlocked { get; private set; }
+    public float SpeedMultiplier => speedModifier.Multiplier;
+    public float EffectiveMoveSpeed => speedModifier.EffectiveSpeed(moveSpeed);
+
+    public void SetSpeedMultiplier(float multiplier) { speedModifier.Set(multiplier); }
 
     public void SetInputBlocked(bool blocked)
     {
         InputBlocked = blocked;
+        if (blocked) speedModifier.Set(1f);
         direction = Vector2.zero;
         if (body == null) body = GetComponent<Rigidbody2D>();
         if (body != null) { body.velocity = Vector2.zero; body.angularVelocity = 0f; }
@@ -48,7 +54,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (InputBlocked) { body.velocity = Vector2.zero; body.angularVelocity = 0f; return; }
-        Vector2 targetVelocity = direction * moveSpeed;
+        Vector2 targetVelocity = direction * EffectiveMoveSpeed;
         float rate = direction.sqrMagnitude > 0f ? acceleration : deceleration;
         body.velocity = Vector2.MoveTowards(
             body.velocity, targetVelocity, rate * Time.fixedDeltaTime);
@@ -56,6 +62,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
 
     private void OnDisable()
     {
+        speedModifier.Set(1f);
         direction = Vector2.zero;
         if (body != null) body.velocity = Vector2.zero;
     }
