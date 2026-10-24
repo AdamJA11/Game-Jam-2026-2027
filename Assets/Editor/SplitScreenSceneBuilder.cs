@@ -58,6 +58,8 @@ public static class SplitScreenSceneBuilder
 
         CreateUI();
         ConfigureRandomSpawns();
+        ConfigureCameraIntroduction();
+        Phase4SceneSetup.ConfigureCurrentScene();
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         Debug.Log("PHASE3_BUILD_OK: " + path);
@@ -107,6 +109,41 @@ public static class SplitScreenSceneBuilder
         if (spawner == null) spawner = root.AddComponent<RandomPlayerSpawns>();
         spawner.Configure(players, points, cameras);
         EditorUtility.SetDirty(spawner);
+    }
+
+    [MenuItem("Game Jam/Set Up Phase 3b Camera Introduction")]
+    public static void UpgradeCameraIntroduction()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "SplitScreenTest")
+            throw new InvalidOperationException("Open SplitScreenTest first.");
+        ConfigureCameraIntroduction();
+        EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        Debug.Log("PHASE3B_SETUP_OK: camera introduction configured and scene saved.");
+    }
+
+    private static void ConfigureCameraIntroduction()
+    {
+        var spawns = UnityEngine.Object.FindObjectOfType<RandomPlayerSpawns>();
+        if (spawns == null) throw new InvalidOperationException("Set up Phase 3a random spawns first.");
+        var players = new TopDownPlayerMovement[3];
+        var follows = new LocalPlayerCameraFollow[3];
+        for (int i = 0; i < 3; i++)
+        {
+            var player = GameObject.Find(i == 0 ? "Player" : "Player" + (i + 1));
+            var camera = GameObject.Find("Player" + (i + 1) + "Camera");
+            if (player == null || camera == null) throw new InvalidOperationException("Missing player or camera " + (i + 1));
+            players[i] = player.GetComponent<TopDownPlayerMovement>();
+            follows[i] = camera.GetComponent<LocalPlayerCameraFollow>();
+            if (players[i] == null || follows[i] == null) throw new InvalidOperationException("Missing movement/follow component " + (i + 1));
+        }
+        var root = GameObject.Find("CameraIntroduction");
+        if (root == null) root = new GameObject("CameraIntroduction");
+        var intro = root.GetComponent<CameraIntroduction>();
+        if (intro == null) intro = root.AddComponent<CameraIntroduction>();
+        intro.Configure(spawns, players, follows);
+        EditorUtility.SetDirty(intro);
     }
 
     private static void SetWall(string name, Vector2 position, Vector2 size)

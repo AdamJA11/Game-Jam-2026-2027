@@ -11,6 +11,15 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     [SerializeField, Min(0.01f)] private float deceleration = 60f;
     private Rigidbody2D body;
     private Vector2 direction;
+    public bool InputBlocked { get; private set; }
+
+    public void SetInputBlocked(bool blocked)
+    {
+        InputBlocked = blocked;
+        direction = Vector2.zero;
+        if (body == null) body = GetComponent<Rigidbody2D>();
+        if (body != null) { body.velocity = Vector2.zero; body.angularVelocity = 0f; }
+    }
 
     private void Awake()
     {
@@ -19,6 +28,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (InputBlocked) { direction = Vector2.zero; return; }
         // Separate key sets let local players share one keyboard.
         bool arrows = controls == ControlScheme.ArrowKeys;
         bool ijkl = controls == ControlScheme.IJKL;
@@ -37,6 +47,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (InputBlocked) { body.velocity = Vector2.zero; body.angularVelocity = 0f; return; }
         Vector2 targetVelocity = direction * moveSpeed;
         float rate = direction.sqrMagnitude > 0f ? acceleration : deceleration;
         body.velocity = Vector2.MoveTowards(

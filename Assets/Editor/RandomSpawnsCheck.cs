@@ -9,7 +9,7 @@ public static class RandomSpawnsCheck
     [MenuItem("Game Jam/Check Phase 3a (while playing)")]
     public static void Run() { SplitScreenCheck.Run(); }
 
-    public static void ValidateCurrent()
+    public static void ValidateCurrent(bool requireCloseCamera = true)
     {
         var spawner = UnityEngine.Object.FindObjectOfType<RandomPlayerSpawns>();
         Require(spawner != null && spawner.HasSpawned, "Startup shuffle completed.");
@@ -31,12 +31,13 @@ public static class RandomSpawnsCheck
         {
             Require(Vector2.Distance(players[i].transform.position, points[assignments[i]].position) < .01f, "Player starts at assigned point.");
             Require(players[i].GetComponent<Rigidbody2D>().velocity.sqrMagnitude < .0001f, "Startup velocity is zero.");
-            Require(Vector2.Distance(cameras[i].transform.position, players[i].transform.position) < .01f, "Camera is already at assigned player.");
+            if (requireCloseCamera)
+                Require(Vector2.Distance(cameras[i].transform.position, players[i].transform.position) < .01f, "Camera is already at assigned player.");
         }
         Require(spawner.ValidateConfiguration(out string error), error);
         Require(spawner.TrySpawn(out error), error);
         spawner.enabled = false; spawner.enabled = true;
-        cameras[0].enabled = false; cameras[0].enabled = true;
+        if (requireCloseCamera) { cameras[0].enabled = false; cameras[0].enabled = true; }
         Require(Enumerable.Range(0, 3).All(i => spawner.GetAssignedSpawn(i) == assignments[i]
             && Vector2.Distance(players[i].transform.position, points[assignments[i]].position) < .01f), "Repeated calls and re-enabling do not reshuffle.");
 

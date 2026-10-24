@@ -11,6 +11,12 @@ public static class SplitScreenCheck
     public static void Run()
     {
         if (!EditorApplication.isPlaying) return;
+        var introduction = UnityEngine.Object.FindObjectOfType<CameraIntroduction>();
+        if (introduction != null && introduction.IsRunning)
+        {
+            Debug.LogWarning("Wait for the Phase 3b opening to finish, then run the gameplay check before moving.");
+            return;
+        }
         if (UnityEngine.Object.FindObjectOfType<RandomPlayerSpawns>() != null)
             RandomSpawnsCheck.ValidateCurrent();
         var follows = UnityEngine.Object.FindObjectsOfType<LocalPlayerCameraFollow>().OrderBy(f => f.name).ToArray();
@@ -26,6 +32,10 @@ public static class SplitScreenCheck
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         var direction = typeof(TopDownPlayerMovement).GetField("direction", flags);
         var step = typeof(TopDownPlayerMovement).GetMethod("FixedUpdate", flags);
+        var combat = UnityEngine.Object.FindObjectOfType<HuntRoundManager>();
+        if (combat != null && combat.Rules.State != HuntRules.Phase.Opening && combat.Rules.State != HuntRules.Phase.TriangleHunt)
+            throw new InvalidOperationException("Restart the scene before running regression checks after a kill.");
+        bool oldCombatSuspended = combat != null && combat.SetVerificationSuspended(true);
         try
         {
             Rect[] rects = { new Rect(0, .5f, .5f, .5f), new Rect(.5f, .5f, .5f, .5f), new Rect(0, 0, .5f, .5f) };
@@ -97,6 +107,7 @@ public static class SplitScreenCheck
         }
         finally
         {
+            if (combat != null) combat.SetVerificationSuspended(oldCombatSuspended);
             Physics2D.simulationMode = oldMode;
             for (int i = 0; i < follows.Length; i++)
             {
