@@ -6,23 +6,23 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scripts/Scenes/Menu_scene.unity
+    path: Assets/Scenes/Menu_scene.unity
     guid: b033aa20e218f594e8e873c1cbb49999
   - enabled: 1
-    path: Assets/Scripts/Scenes/Game.unity
+    path: Assets/Scenes/Game.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 0
     path: 
-    guid: 9e9b6a44f89c31e4ca9df815504faae6
+    guid: 00000000000000000000000000000000
   - enabled: 1
-    path: Assets/Scripts/Scenes/SplitScreenTest.unity
+    path: Assets/Scenes/SplitScreenTest.unity
     guid: b517ef401f526e846888d07d56185bbe
-  - enabled: 1
+  - enabled: 0
     path: 
-    guid: d87a1012975f2b840b699341eee569b4
-  - enabled: 1
+    guid: 00000000000000000000000000000000
+  - enabled: 0
     path: 
-    guid: 520cb31be562b21408cca0ce7b918b82
+    guid: 00000000000000000000000000000000
   - enabled: 1
     path: Assets/Scenes/SplitScreenMapB.unity
     guid: 20acc90f98a8858469fafc0df3ede9b3
