@@ -1028,7 +1028,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: P1 / WASD
+  m_Text: P1 Stone / WASD
 --- !u!222 &82367939
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5779,7 +5779,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "P2 / \u2191\u2193\u2190\u2192"
+  m_Text: "P2 Scissors / \u2191\u2193\u2190\u2192"
 --- !u!222 &491722486
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18600,9 +18600,10 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'HUNT <color=#FF40CC>P2 MAGENTA</color>
+  m_Text: 'HUNT <color=#FF40CC>P2 Scissors MAGENTA</color>
 
-    AVOID <color=#4CFF4C>P3 GREEN</color>'
+    AVOID <color=#4CFF4C>P3
+    Paper GREEN</color>'
 --- !u!1 &756378585
 GameObject:
   m_ObjectHideFlags: 0
@@ -18822,9 +18823,10 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'HUNT <color=#FFEB04>P1 YELLOW</color>
+  m_Text: 'HUNT <color=#FFEB04>P1 Stone YELLOW</color>
 
-    AVOID <color=#FF40CC>P2 MAGENTA</color>'
+    AVOID <color=#FF40CC>P2
+    Scissors MAGENTA</color>'
 --- !u!222 &779897675
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36943,9 +36945,10 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'HUNT <color=#4CFF4C>P3 GREEN</color>
+  m_Text: 'HUNT <color=#4CFF4C>P3 Paper GREEN</color>
 
-    AVOID <color=#FFEB04>P1 YELLOW</color>'
+    AVOID <color=#FFEB04>P1
+    Stone YELLOW</color>'
 --- !u!1 &1799300159
 GameObject:
   m_ObjectHideFlags: 0
@@ -37815,7 +37818,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: P3 / IJKL
+  m_Text: P3 Paper / IJKL
 --- !u!222 &1847228812
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40494,7 +40497,6 @@ MonoBehaviour:
   killerSize: 1
   victimSize: 1
   angle: 0
-  verticalCenter: 0.34
   startScale: 0.95
   endScale: 1.05
 --- !u!1 &2054441615
