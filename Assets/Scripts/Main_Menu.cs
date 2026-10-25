@@ -5,10 +5,13 @@ using UnityEngine.SceneManagement;
 
 public class Main_Menu : MonoBehaviour
 {
+    public GameObject TransitionSwitch; // Reference to the main menu UI
     // Start is called before the first frame update
     public void Play()
     {
-        SceneManager.LoadScene("Game");
+        //TransitionSwitch.SetActive(true); // Activate the transition switch
+        SceneManager.LoadSceneAsync(SceneManager.GetActiveScene().buildIndex + 1);
+
     }
 
     // Update is called once per frame
