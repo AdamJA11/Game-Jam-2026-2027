@@ -24,7 +24,7 @@ public static class RandomSpawnsCheck
         Require(permutations.Count == 6, "All six equally weighted draw combinations produce different assignments.");
         var players = new[] { GameObject.Find("Player").GetComponent<TopDownPlayerMovement>(), GameObject.Find("Player2").GetComponent<TopDownPlayerMovement>(), GameObject.Find("Player3").GetComponent<TopDownPlayerMovement>() };
         var cameras = Enumerable.Range(1, 3).Select(i => GameObject.Find("Player" + i + "Camera").GetComponent<LocalPlayerCameraFollow>()).ToArray();
-        var points = Enumerable.Range(0, 3).Select(spawner.GetSpawnPoint).ToArray();
+        var points = Enumerable.Range(0, spawner.SpawnPointCount).Select(spawner.GetSpawnPoint).ToArray();
         var assignments = Enumerable.Range(0, 3).Select(spawner.GetAssignedSpawn).ToArray();
         Require(assignments.Distinct().Count() == 3, "Each spawn is used once.");
         for (int i = 0; i < 3; i++)
@@ -48,16 +48,17 @@ public static class RandomSpawnsCheck
         var validation = fixture.AddComponent<RandomPlayerSpawns>();
         try
         {
-            var bad = (Transform[])points.Clone(); bad[0] = null;
+            var fixturePoints = points.Take(3).ToArray();
+            var bad = (Transform[])fixturePoints.Clone(); bad[0] = null;
             validation.Configure(players, bad, cameras);
             Require(!validation.TrySpawn(out error), "Missing point rejected before teleport.");
             bad[0] = points[1];
             validation.Configure(players, bad, cameras);
             Require(!validation.ValidateConfiguration(out error), "Duplicate point rejected.");
             var badPlayers = (TopDownPlayerMovement[])players.Clone(); badPlayers[0] = badPlayers[1];
-            validation.Configure(badPlayers, points, cameras);
+            validation.Configure(badPlayers, fixturePoints, cameras);
             Require(!validation.ValidateConfiguration(out error), "Duplicate player rejected.");
-            samplePoint.transform.position = new Vector3(-6, 0, 0);
+            samplePoint.transform.position = new Vector3(0, 12.25f, 0);
             bad[0] = samplePoint.transform;
             validation.Configure(players, bad, cameras);
             Require(!validation.ValidateConfiguration(out error), "Obstacle overlap rejected using collider footprint.");

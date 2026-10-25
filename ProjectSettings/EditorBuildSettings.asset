@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SplitScreenTest.unity
     guid: b517ef401f526e846888d07d56185bbe
+  - enabled: 1
+    path: Assets/Scenes/SplitScreenMapB.unity
+    guid: d87a1012975f2b840b699341eee569b4
   m_configObjects: {}

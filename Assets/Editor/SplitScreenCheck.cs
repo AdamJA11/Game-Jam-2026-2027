@@ -99,11 +99,14 @@ public static class SplitScreenCheck
                 direction.SetValue(players[i], Vector2.one.normalized);
                 Physics2D.SyncTransforms();
                 for (int n = 0; n < 25; n++) { step.Invoke(players[i], null); Physics2D.Simulate(Time.fixedDeltaTime); }
-                Require(!target.activeSelf, "Every player can trigger shared disappearance.");
+                var item = target.GetComponent<RandomItemPickup>();
+                if (item != null)
+                    Require((item.Occupants(combat) & (1 << i)) != 0, "Every registered player can overlap the item; rewards stay gated during this fixture.");
+                else Require(!target.activeSelf, "Every player can trigger shared disappearance.");
                 body.position = positions[i];
                 body.velocity = Vector2.zero;
             }
-            Debug.Log("PHASE3_CHECK_OK: three viewports, labels, single listener, independent following, hidden distant opponents, bounds at 16:9/16:10, small map, unavailable target, walls and shared touch.");
+            Debug.Log("PHASE3_CHECK_OK: cameras, bounds, walls, and shared contact geometry. Random-item rewards and private trails require the Phase 3f checks.");
         }
         finally
         {

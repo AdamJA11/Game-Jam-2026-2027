@@ -20,9 +20,11 @@ public sealed class RoundEndState
 
     public void ReloadFailed() { IsReloading = false; }
 
-    public static string ResultText(int winner)
+    public static string ResultText(int winner, HuntRules.Result reason = HuntRules.Result.LastSurvivor)
     {
         if (winner < 0) return "DRAW\nNO SURVIVORS";
+        if (reason == HuntRules.Result.EscapedThroughDoor) return "P" + (winner + 1) + " ESCAPED!\nSURVIVOR WINS - " + HuntPresentation.ColorName(winner);
+        if (reason == HuntRules.Result.Captured) return "P" + (winner + 1) + " WINS!\nAPEX CAUGHT THE SURVIVOR - " + HuntPresentation.ColorName(winner);
         return "P" + (winner + 1) + " WINS!\nLAST PLAYER ALIVE - " + HuntPresentation.ColorName(winner);
     }
 }

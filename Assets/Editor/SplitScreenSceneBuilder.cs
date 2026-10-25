@@ -108,7 +108,13 @@ public static class SplitScreenSceneBuilder
         }
         var spawner = root.GetComponent<RandomPlayerSpawns>();
         if (spawner == null) spawner = root.AddComponent<RandomPlayerSpawns>();
-        spawner.Configure(players, points, cameras);
+        var preservedPoints = new System.Collections.Generic.List<Transform>(points);
+        for (int i = 0; i < spawner.SpawnPointCount; i++)
+        {
+            var existing = spawner.GetSpawnPoint(i);
+            if (existing != null && !preservedPoints.Contains(existing)) preservedPoints.Add(existing);
+        }
+        spawner.Configure(players, preservedPoints.ToArray(), cameras);
         EditorUtility.SetDirty(spawner);
     }
 
