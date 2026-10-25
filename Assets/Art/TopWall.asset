@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6560e32253deed4898504ff53cd1467, type: 3}
+  m_Name: TopWall
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 2444439286196830894, guid: 8b97ba63ddeed204182f9d4e4d23f3ff, type: 3}
+  allowedTop:
+  - {fileID: 11400000, guid: 9259daedfac7fca47b834ce50ca3ad3f, type: 2}
+  allowedRight:
+  - {fileID: 11400000}
+  - {fileID: 11400000, guid: 0deaa3f0c9c91fb469b89981c64f5620, type: 2}
+  - {fileID: 11400000, guid: 9259daedfac7fca47b834ce50ca3ad3f, type: 2}
+  allowedBottom:
+  - {fileID: 11400000, guid: 9259daedfac7fca47b834ce50ca3ad3f, type: 2}
+  allowedLeft:
+  - {fileID: 11400000}
+  - {fileID: 11400000, guid: 0deaa3f0c9c91fb469b89981c64f5620, type: 2}
+  - {fileID: 11400000, guid: 9259daedfac7fca47b834ce50ca3ad3f, type: 2}
