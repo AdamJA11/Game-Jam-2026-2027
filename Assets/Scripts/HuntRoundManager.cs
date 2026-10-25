@@ -9,6 +9,13 @@ public sealed class HuntRoundManager : MonoBehaviour
     [SerializeField] private Text[] statusLabels = new Text[3];
     [SerializeField, Min(1f)] private float apexSpeedMultiplier = 1.35f;
     [SerializeField] private EscapeDoor escapeDoor;
+    [Header("Action sounds")]
+    [SerializeField] private AudioSource actionAudioSource;
+    [SerializeField] private AudioClip killSound = null;
+    [SerializeField] private AudioClip apexTransformSound = null;
+    [SerializeField, Range(0, 1)] private float killSoundVolume = .7f;
+    [SerializeField, Range(0, 1)] private float apexTransformSoundVolume = .7f;
+    private readonly HuntAudioEvents audioEvents = new HuntAudioEvents();
     private readonly string[] identityHex = new string[3];
     private readonly Color[] identityColors = new Color[3];
     private bool identityCaptured;
@@ -59,6 +66,9 @@ public sealed class HuntRoundManager : MonoBehaviour
         identityCaptured = true;
         transformation = GetComponent<ApexTransformationPresentation>();
         items = GetComponent<RandomItemCoordinator>();
+        if (actionAudioSource == null) actionAudioSource = GetComponent<AudioSource>();
+        if (actionAudioSource == null || killSound == null || apexTransformSound == null)
+            Debug.LogWarning("HuntRoundManager: action audio is incomplete. Assign Action Audio Source, Kill Sound, and Apex Transform Sound. Gameplay will continue.", this);
         ApplyState();
     }
 
@@ -109,8 +119,21 @@ public sealed class HuntRoundManager : MonoBehaviour
         int contacts = pendingContacts | touchingContacts;
         pendingContacts = 0;
         Rules.ResolveStep(contacts, escapeDoor != null ? escapeDoor.Occupants() : 0, Time.fixedDeltaTime);
+        PlayActionSounds();
         ApplyState();
         if (items != null) items.ResolvePickups();
+    }
+
+    private void PlayActionSounds()
+    {
+        audioEvents.Observe(Rules, out int kills, out bool transformationStarted);
+        if (actionAudioSource == null || !actionAudioSource.isActiveAndEnabled) return;
+        // PlayOneShot permits the first kill and transformation clips to overlap.
+        if (killSound != null)
+            for (int i = 0; i < kills; i++) actionAudioSource.PlayOneShot(killSound, Mathf.Clamp01(killSoundVolume));
+        if (transformationStarted && apexTransformSound != null)
+            actionAudioSource.PlayOneShot(apexTransformSound, Mathf.Clamp01(apexTransformSoundVolume));
+        // Never stop on Transforming -> FinalChase or RoundOver. The source owns the natural tail.
     }
 
     private void StartWhenReady()
