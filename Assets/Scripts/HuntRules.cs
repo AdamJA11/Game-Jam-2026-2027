@@ -3,11 +3,14 @@ using System;
 // Pure rules: no Unity callbacks or scene objects. Player IDs are 0, 1, 2.
 public sealed class HuntRules
 {
+    public const float TransformationDuration = 1f;
     public enum Phase { Opening, TriangleHunt, Transforming, FinalChase, RoundOver }
+    public enum Result { None, LastSurvivor, Captured, EscapedThroughDoor, Draw }
     public Phase State { get; private set; } = Phase.Opening;
     public int AliveMask { get; private set; } = 7;
     public int ApexId { get; private set; } = -1;
     public int WinnerId { get; private set; } = -1;
+    public Result Outcome { get; private set; }
     public float TransformRemaining { get; private set; }
     private readonly int[] killedBy = { -1, -1, -1 };
 
@@ -45,12 +48,14 @@ public sealed class HuntRules
         for (int i = 0; i < 3; i++) if (IsAlive(i)) count++;
         if (count <= 1)
         {
+            bool finalCapture = State == Phase.FinalChase;
             State = Phase.RoundOver;
+            Outcome = count == 0 ? Result.Draw : finalCapture ? Result.Captured : Result.LastSurvivor;
             for (int i = 0; i < 3; i++) if (IsAlive(i)) WinnerId = i;
             return;
         }
         ApexId = firstKiller;
-        TransformRemaining = 1f;
+        TransformRemaining = TransformationDuration;
         State = Phase.Transforming;
     }
 
@@ -60,5 +65,22 @@ public sealed class HuntRules
         if (State != Phase.Transforming) return;
         TransformRemaining = Math.Max(0f, TransformRemaining - seconds);
         if (TransformRemaining <= .000001f) { TransformRemaining = 0f; State = Phase.FinalChase; }
+    }
+
+    public void ResolveStep(int contacts, int doorOccupants, float seconds)
+    {
+        if (State == Phase.Transforming) AdvanceTransformation(seconds);
+        ResolveContacts(contacts); // Valid capture takes priority over same-step escape.
+        ResolveEscape(doorOccupants);
+    }
+
+    public bool ResolveEscape(int occupants)
+    {
+        if ((State != Phase.Transforming && State != Phase.FinalChase) || ApexId < 0) return false;
+        for (int i = 0; i < 3; i++) if (i != ApexId && IsAlive(i) && (occupants & (1 << i)) != 0)
+        {
+            WinnerId = i; Outcome = Result.EscapedThroughDoor; State = Phase.RoundOver; return true;
+        }
+        return false;
     }
 }

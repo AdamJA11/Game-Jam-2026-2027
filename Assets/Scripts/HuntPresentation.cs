@@ -1,6 +1,6 @@
 using System;
 
-// Identity names remain fixed; tint may use the actual player renderer's color.
+// Names and tint use original player identity, independent of Apex body appearance.
 public static class HuntPresentation
 {
     public static string ColorName(int id)
@@ -22,23 +22,23 @@ public static class HuntPresentation
     public static string InitialLabel(int id, string[] colors = null)
         => "HUNT " + Identity((id + 1) % 3, colors) + "\nAVOID " + Identity((id + 2) % 3, colors);
 
-    public static string Status(HuntRules rules, int viewer, string[] colors = null)
+    public static string Status(HuntRules rules, int viewer, string[] colors = null, bool warningWave = false)
     {
         if (rules.State == HuntRules.Phase.RoundOver)
         {
             if (rules.WinnerId < 0) return "DRAW - NO SURVIVORS";
-            if (rules.WinnerId == viewer) return "YOU WIN\n" + Identity(viewer, colors);
+            if (rules.WinnerId == viewer) return (rules.Outcome == HuntRules.Result.EscapedThroughDoor ? "YOU ESCAPED\n" : "YOU WIN\n") + Identity(viewer, colors);
             return "ROUND OVER - " + Identity(rules.WinnerId, colors) + " WINS";
         }
         if (!rules.IsAlive(viewer)) return "ELIMINATED\nCAUGHT BY " + Identity(rules.KilledBy(viewer), colors);
         if (rules.State == HuntRules.Phase.Transforming)
             return viewer == rules.ApexId
-                ? "TRANSFORMING " + rules.TransformRemaining.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s\nNEXT HUNT " + Identity(RemainingOpponent(rules, viewer), colors)
-                : "ESCAPE " + Identity(rules.ApexId, colors) + "\nTRANSFORMING - GET AWAY!";
+                ? "TRANSFORMING " + (ApexTransformationMath.CountdownTenths(rules.TransformRemaining) / 10f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "s\nNEXT HUNT " + Identity(RemainingOpponent(rules, viewer), colors)
+                : "ESCAPE " + Identity(rules.ApexId, colors) + (warningWave ? "\nRED WAVE FROM APEX - RUN AWAY" : "\nTRANSFORMING - GET AWAY!");
         if (rules.State == HuntRules.Phase.FinalChase)
             return viewer == rules.ApexId
                 ? "APEX - HUNT " + Identity(RemainingOpponent(rules, viewer), colors) + "\nAVOID: NONE"
-                : "AVOID APEX " + Identity(rules.ApexId, colors) + "\nHUNT: NONE";
+                : "AVOID APEX " + Identity(rules.ApexId, colors) + (warningWave ? "\nRED WAVE FROM APEX - RUN AWAY" : "\nHUNT: NONE");
         return InitialLabel(viewer, colors);
     }
 

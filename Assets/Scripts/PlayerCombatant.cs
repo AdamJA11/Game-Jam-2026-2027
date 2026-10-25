@@ -11,6 +11,7 @@ public sealed class PlayerCombatant : MonoBehaviour
     private Rigidbody2D body;
     private BoxCollider2D hitbox;
     private SpriteRenderer visual;
+    private PlayerDeathBurst deathBurst;
     private bool pinned;
     private RigidbodyConstraints2D previousConstraints;
     public int PlayerId => playerId;
@@ -35,6 +36,7 @@ public sealed class PlayerCombatant : MonoBehaviour
         if (body == null) body = GetComponent<Rigidbody2D>();
         if (hitbox == null) hitbox = GetComponent<BoxCollider2D>();
         if (visual == null) visual = GetComponent<SpriteRenderer>();
+        if (deathBurst == null) deathBurst = GetComponent<PlayerDeathBurst>();
     }
 
     public void ApplyState(bool alive, bool allowMovement, bool pinPosition, bool apex, float apexMultiplier = 1f)
@@ -44,6 +46,11 @@ public sealed class PlayerCombatant : MonoBehaviour
         if (!alive && !IsEliminated)
         {
             IsEliminated = true;
+            // Capture the intact visual before hiding it. Effects never decide the kill.
+            if (deathBurst != null)
+                deathBurst.Play(round != null ? round.GetKillerPosition(playerId) : (Vector2)transform.position);
+            else
+                Debug.LogWarning("PlayerCombatant: no death burst configured. Run the Phase 6 setup outside Play mode.", this);
             movement.SetInputBlocked(true);
             body.velocity = Vector2.zero; body.angularVelocity = 0;
             hitbox.enabled = false;

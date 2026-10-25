@@ -12,9 +12,14 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     private Rigidbody2D body;
     private Vector2 direction;
     private readonly MovementSpeedModifier speedModifier = new MovementSpeedModifier();
+    private readonly MovementSpeedModifier itemSpeedModifier = new MovementSpeedModifier();
     public bool InputBlocked { get; private set; }
     public float SpeedMultiplier => speedModifier.Multiplier;
-    public float EffectiveMoveSpeed => speedModifier.EffectiveSpeed(moveSpeed);
+    public float EffectiveMoveSpeed => itemSpeedModifier.EffectiveSpeed(speedModifier.EffectiveSpeed(moveSpeed));
+    public Vector2 MovementIntent => InputBlocked || !enabled ? Vector2.zero : direction;
+    public float Acceleration => acceleration;
+    public float Deceleration => deceleration;
+    public void SetItemSpeedMultiplier(float multiplier) { itemSpeedModifier.Set(multiplier); }
 
     public void SetSpeedMultiplier(float multiplier) { speedModifier.Set(multiplier); }
 
@@ -63,6 +68,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     private void OnDisable()
     {
         speedModifier.Set(1f);
+        itemSpeedModifier.Set(1f);
         direction = Vector2.zero;
         if (body != null) body.velocity = Vector2.zero;
     }

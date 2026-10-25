@@ -9,8 +9,12 @@ public sealed class RandomPlayerSpawns : MonoBehaviour
     [SerializeField] private LocalPlayerCameraFollow[] cameras = new LocalPlayerCameraFollow[3];
     [SerializeField] private Rect playableBounds = new Rect(-20, -12, 40, 24);
     private int[] assignment;
+    private System.Collections.Generic.List<int[]> validGroups;
+    private float closeViewSize = 3f;
 
     public bool HasSpawned => assignment != null;
+    public int SpawnPointCount => spawnPoints == null ? 0 : spawnPoints.Length;
+    public Rect PlayableBounds => playableBounds;
     public int GetAssignedSpawn(int playerIndex) => assignment[playerIndex];
     public Transform GetSpawnPoint(int index) => spawnPoints[index];
 
@@ -34,7 +38,7 @@ public sealed class RandomPlayerSpawns : MonoBehaviour
         if (HasSpawned) return true;
         if (!ValidateConfiguration(out error)) return false;
 
-        int[] selected = CreateAssignment(max => UnityEngine.Random.Range(0, max));
+        int[] selected = SpawnSelection.Choose(validGroups, max => UnityEngine.Random.Range(0, max));
         for (int i = 0; i < 3; i++)
         {
             Rigidbody2D body = players[i].GetComponent<Rigidbody2D>();
@@ -71,25 +75,32 @@ public sealed class RandomPlayerSpawns : MonoBehaviour
     public bool ValidateConfiguration(out string error)
     {
         error = null;
-        if (players == null || players.Length != 3 || spawnPoints == null || spawnPoints.Length != 3
+        if (players == null || players.Length != 3 || spawnPoints == null || spawnPoints.Length < 3
             || cameras == null || cameras.Length != 3)
-            return Invalid("Assign exactly three players, points, and cameras.", out error);
-        if (playableBounds.width <= 0 || playableBounds.height <= 0)
+            return Invalid("Assign three players/cameras and at least three spawn points.", out error);
+        if (!Finite(playableBounds.x) || !Finite(playableBounds.y) || !Finite(playableBounds.width) || !Finite(playableBounds.height)
+            || playableBounds.width <= 0 || playableBounds.height <= 0)
             return Invalid("Playable bounds must have positive dimensions.", out error);
         for (int i = 0; i < 3; i++)
         {
-            if (players[i] == null || spawnPoints[i] == null || cameras[i] == null)
+            if (players[i] == null || cameras[i] == null)
                 return Invalid("Player, spawn, or camera reference " + i + " is missing.", out error);
             if (!players[i].gameObject.activeInHierarchy || players[i].GetComponent<Rigidbody2D>() == null
                 || players[i].GetComponent<BoxCollider2D>() == null || !players[i].GetComponent<BoxCollider2D>().enabled)
                 return Invalid("Each player needs an active object, Rigidbody2D, and enabled BoxCollider2D.", out error);
             if (cameras[i].Target != players[i].transform)
                 return Invalid("Each camera must follow its corresponding player.", out error);
+            for (int j = 0; j < i; j++) if (players[i] == players[j] || cameras[i] == cameras[j])
+                return Invalid("Players and cameras must be distinct.", out error);
+        }
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            if (spawnPoints[i] == null) return Invalid("Spawn reference " + i + " is missing.", out error);
             Vector3 position = spawnPoints[i].position;
             if (!Finite(position.x) || !Finite(position.y) || !Finite(position.z) || Mathf.Abs(position.z) > .001f)
                 return Invalid("Spawn positions must be finite and at Z = 0.", out error);
             for (int j = 0; j < i; j++)
-                if (players[i] == players[j] || cameras[i] == cameras[j] || spawnPoints[i] == spawnPoints[j]
+                if (spawnPoints[i] == spawnPoints[j]
                     || Vector2.Distance(position, spawnPoints[j].position) < .001f)
                     return Invalid("Players, cameras, and spawn positions must be distinct.", out error);
         }
@@ -105,7 +116,7 @@ public sealed class RandomPlayerSpawns : MonoBehaviour
             float rad = angle * Mathf.Deg2Rad;
             Vector2 extent = new Vector2(Mathf.Abs(Mathf.Cos(rad)) * size.x + Mathf.Abs(Mathf.Sin(rad)) * size.y,
                 Mathf.Abs(Mathf.Sin(rad)) * size.x + Mathf.Abs(Mathf.Cos(rad)) * size.y) * .5f;
-            for (int s = 0; s < 3; s++)
+            for (int s = 0; s < spawnPoints.Length; s++)
             {
                 Vector2 center = (Vector2)spawnPoints[s].position + offset;
                 if (center.x - extent.x < playableBounds.xMin || center.x + extent.x > playableBounds.xMax
@@ -114,20 +125,45 @@ public sealed class RandomPlayerSpawns : MonoBehaviour
                 foreach (var hit in Physics2D.OverlapBoxAll(center, size, angle))
                     if (!IsPlayerCollider(hit))
                         return Invalid("Spawn " + spawnPoints[s].name + " overlaps " + hit.name + ".", out error);
-                // Conservative footprint separation works for all player sizes and permutations.
-                for (int other = 0; other < 3; other++) if (other != s)
-                    for (int q = 0; q < 3; q++) if (q != p)
-                    {
-                        Bounds otherBounds = players[q].GetComponent<BoxCollider2D>().bounds;
-                        Vector2 otherOffset = (Vector2)otherBounds.center - (Vector2)players[q].transform.position;
-                        Vector2 delta = center - ((Vector2)spawnPoints[other].position + otherOffset);
-                        if (Mathf.Abs(delta.x) < extent.x + otherBounds.extents.x
-                            && Mathf.Abs(delta.y) < extent.y + otherBounds.extents.y)
-                            return Invalid("Spawn footprints overlap.", out error);
-                    }
+            }
+        }
+        foreach (var root in gameObject.scene.GetRootGameObjects())
+        {
+            var intro = root.GetComponentInChildren<CameraIntroduction>(true);
+            if (intro != null) { closeViewSize = intro.NormalSize; break; }
+        }
+        validGroups = SpawnSelection.Groups(spawnPoints.Length, Compatible);
+        if (validGroups.Count == 0) return Invalid("No three-point group has clear footprints and separate initial camera views.", out error);
+        return true;
+    }
+
+    private bool Compatible(int a, int b)
+    {
+        // Conservative largest-footprint margin works for every identity assignment.
+        float margin = 0;
+        foreach (var player in players) margin = Mathf.Max(margin, player.GetComponent<BoxCollider2D>().bounds.extents.magnitude);
+        Vector2 first = spawnPoints[a].position, second = spawnPoints[b].position;
+        if (Vector2.Distance(first, second) <= margin * 2) return false;
+        for (int i = 0; i < 3; i++)
+        {
+            var view = cameras[i].GetComponent<Camera>();
+            foreach (float aspect in new[] { view.aspect, 16f / 9, 16f / 10 })
+            {
+                float halfY = closeViewSize;
+                float halfX = halfY * aspect;
+                Rect bounds = cameras[i].MapBounds;
+                if (Visible(first, second, bounds, halfX, halfY, margin)
+                    || Visible(second, first, bounds, halfX, halfY, margin)) return false;
             }
         }
         return true;
+    }
+
+    private static bool Visible(Vector2 target, Vector2 other, Rect bounds, float halfX, float halfY, float margin)
+    {
+        float x = bounds.width <= halfX * 2 ? bounds.center.x : Mathf.Clamp(target.x, bounds.xMin + halfX, bounds.xMax - halfX);
+        float y = bounds.height <= halfY * 2 ? bounds.center.y : Mathf.Clamp(target.y, bounds.yMin + halfY, bounds.yMax - halfY);
+        return Mathf.Abs(other.x - x) <= halfX + margin && Mathf.Abs(other.y - y) <= halfY + margin;
     }
 
     private bool IsPlayerCollider(Collider2D hit)

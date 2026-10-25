@@ -60,6 +60,7 @@ public static class SplitScreenSceneBuilder
         ConfigureRandomSpawns();
         ConfigureCameraIntroduction();
         Phase4SceneSetup.ConfigureCurrentScene();
+        Phase5SceneSetup.ConfigureCurrentScene();
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         Debug.Log("PHASE3_BUILD_OK: " + path);
@@ -107,7 +108,13 @@ public static class SplitScreenSceneBuilder
         }
         var spawner = root.GetComponent<RandomPlayerSpawns>();
         if (spawner == null) spawner = root.AddComponent<RandomPlayerSpawns>();
-        spawner.Configure(players, points, cameras);
+        var preservedPoints = new System.Collections.Generic.List<Transform>(points);
+        for (int i = 0; i < spawner.SpawnPointCount; i++)
+        {
+            var existing = spawner.GetSpawnPoint(i);
+            if (existing != null && !preservedPoints.Contains(existing)) preservedPoints.Add(existing);
+        }
+        spawner.Configure(players, preservedPoints.ToArray(), cameras);
         EditorUtility.SetDirty(spawner);
     }
 
