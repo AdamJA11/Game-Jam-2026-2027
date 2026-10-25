@@ -21,6 +21,7 @@ public sealed class HuntRoundManager : MonoBehaviour
     private bool identityCaptured;
     private ApexTransformationPresentation transformation;
     private RandomItemCoordinator items;
+    private KillClawOverlay killClaws;
     private bool labelsInitialized;
     private HuntRules.Phase labelPhase;
     private int labelAliveMask, labelApex, labelWinner, labelCountdown;
@@ -33,6 +34,9 @@ public sealed class HuntRoundManager : MonoBehaviour
     public bool GameplayAvailable => !failed && !verificationSuspended && Rules != null;
     public void ConfigureDoor(EscapeDoor door) { escapeDoor = door; }
     public PlayerCombatant GetPlayer(int id) => players != null && id >= 0 && id < players.Length ? players[id] : null;
+    public void CancelCameraShakes()
+    { for (int i = 0; i < 3; i++) if (GetPlayer(i) != null) GetPlayer(i).CancelCameraShake(); }
+    public void CancelKillClaws() { if (killClaws != null) killClaws.CancelAll(); }
     public Vector2 GetKillerPosition(int victimId)
     {
         int killer = Rules != null && victimId >= 0 && victimId < 3 ? Rules.KilledBy(victimId) : -1;
@@ -66,6 +70,7 @@ public sealed class HuntRoundManager : MonoBehaviour
         identityCaptured = true;
         transformation = GetComponent<ApexTransformationPresentation>();
         items = GetComponent<RandomItemCoordinator>();
+        killClaws = GetComponent<KillClawOverlay>();
         if (actionAudioSource == null) actionAudioSource = GetComponent<AudioSource>();
         if (actionAudioSource == null || killSound == null || apexTransformSound == null)
             Debug.LogWarning("HuntRoundManager: action audio is incomplete. Assign Action Audio Source, Kill Sound, and Apex Transform Sound. Gameplay will continue.", this);
@@ -120,6 +125,7 @@ public sealed class HuntRoundManager : MonoBehaviour
         pendingContacts = 0;
         Rules.ResolveStep(contacts, escapeDoor != null ? escapeDoor.Occupants() : 0, Time.fixedDeltaTime);
         PlayActionSounds();
+        if (killClaws != null) killClaws.ObserveCommittedKills(Rules);
         ApplyState();
         if (items != null) items.ResolvePickups();
     }

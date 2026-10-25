@@ -11,16 +11,19 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     [SerializeField, Min(0.01f)] private float deceleration = 60f;
     private Rigidbody2D body;
     private Vector2 direction;
+    
+    // Assurez-vous que la classe MovementSpeedModifier est bien définie dans votre projet
     private readonly MovementSpeedModifier speedModifier = new MovementSpeedModifier();
     private readonly MovementSpeedModifier itemSpeedModifier = new MovementSpeedModifier();
+    
     public bool InputBlocked { get; private set; }
     public float SpeedMultiplier => speedModifier.Multiplier;
     public float EffectiveMoveSpeed => itemSpeedModifier.EffectiveSpeed(speedModifier.EffectiveSpeed(moveSpeed));
     public Vector2 MovementIntent => InputBlocked || !enabled ? Vector2.zero : direction;
     public float Acceleration => acceleration;
     public float Deceleration => deceleration;
+    
     public void SetItemSpeedMultiplier(float multiplier) { itemSpeedModifier.Set(multiplier); }
-
     public void SetSpeedMultiplier(float multiplier) { speedModifier.Set(multiplier); }
 
     public void SetInputBlocked(bool blocked)
@@ -35,11 +38,13 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        PlayerVisualFacing.For(gameObject);
     }
 
     private void Update()
     {
         if (InputBlocked) { direction = Vector2.zero; return; }
+        
         // Separate key sets let local players share one keyboard.
         bool arrows = controls == ControlScheme.ArrowKeys;
         bool ijkl = controls == ControlScheme.IJKL;
@@ -47,13 +52,15 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
                 - (Input.GetKey(arrows ? KeyCode.LeftArrow : ijkl ? KeyCode.J : KeyCode.A) ? 1f : 0f);
         float y = (Input.GetKey(arrows ? KeyCode.UpArrow : ijkl ? KeyCode.I : KeyCode.W) ? 1f : 0f)
                 - (Input.GetKey(arrows ? KeyCode.DownArrow : ijkl ? KeyCode.K : KeyCode.S) ? 1f : 0f);
+        
         direction = ReadDirection(x, y);
+
+        // PlayerVisualFacing turns only artwork. The Rigidbody/collider root stays stable.
     }
 
     private static Vector2 ReadDirection(float x, float y)
-    // deal with w+d d+w
     {
-        return Vector2.ClampMagnitude(new Vector2(x, y), 1f); // ClampMagnitude make suqareroot (1+1) = 1.4 -> to 1
+        return Vector2.ClampMagnitude(new Vector2(x, y), 1f); 
     }
 
     private void FixedUpdate()

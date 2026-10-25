@@ -56,7 +56,9 @@ public sealed class PlayerCombatant : MonoBehaviour
             hitbox.enabled = false;
             body.simulated = false;
             visual.enabled = false;
-            follow.SetAutomaticFollowSuspended(true);
+            var facing = GetComponent<PlayerVisualFacing>();
+            if (facing != null) facing.HideForElimination();
+            follow.HoldDeathViewAndShake(playerId);
         }
         if (alive)
         {
@@ -70,7 +72,8 @@ public sealed class PlayerCombatant : MonoBehaviour
     }
 
     private void OnCollisionEnter2D(Collision2D collision) { Report(collision); }
-    public void HoldCamera() { if (follow != null) follow.SetAutomaticFollowSuspended(true); }
+    public void HoldCamera() { if (follow != null) follow.HoldView(); }
+    public void CancelCameraShake() { if (follow != null) follow.CancelDeathShake(); }
     private void OnCollisionStay2D(Collision2D collision) { Report(collision); }
     private void OnCollisionExit2D(Collision2D collision)
     {

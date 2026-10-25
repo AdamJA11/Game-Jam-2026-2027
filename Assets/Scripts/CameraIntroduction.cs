@@ -37,7 +37,7 @@ public sealed class CameraIntroduction : MonoBehaviour
             previousBlocks[i] = players[i].InputBlocked;
             previousSuspensions[i] = playerCameras[i].AutomaticFollowSuspended;
             players[i].SetInputBlocked(true);
-            playerCameras[i].SetAutomaticFollowSuspended(true);
+            playerCameras[i].SuspendForIntroduction();
         }
         ownsState = true;
         CurrentStage = Stage.Overview;
