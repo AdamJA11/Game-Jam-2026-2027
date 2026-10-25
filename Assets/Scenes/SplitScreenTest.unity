@@ -33842,6 +33842,21 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1597826474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1149421556}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae33542ea3c6afc44acdbb8efdcf3254, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normalFacingOffset: 0
+  apexFacingOffset: 0
+  apexSizeMultiplier: 1
 --- !u!1 &1598321202
 GameObject:
   m_ObjectHideFlags: 0
@@ -39949,6 +39964,8 @@ MonoBehaviour:
   - {fileID: 1183875408}
   - {fileID: 894074721}
   ring: {fileID: 1001818010}
+  apexSprite: {fileID: 21300000, guid: 06c11340787ea56479e3ef4ccc099d89, type: 3}
+  showSpriteOutline: 0
   playableBounds:
     serializedVersion: 2
     x: -20
@@ -40672,6 +40689,16 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 110854885014971486, guid: 055872b5d7e7d604696b449572eb80eb,
         type: 3}
+      propertyPath: m_Size.x
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: 055872b5d7e7d604696b449572eb80eb,
+        type: 3}
+      propertyPath: m_Size.y
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: 055872b5d7e7d604696b449572eb80eb,
+        type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
       value: 0.64
       objectReference: {fileID: 0}
@@ -40782,6 +40809,16 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 110854885014971486, guid: d4db478c47b5485daae5330a3d5194a8,
         type: 3}
+      propertyPath: m_Size.x
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: d4db478c47b5485daae5330a3d5194a8,
+        type: 3}
+      propertyPath: m_Size.y
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: d4db478c47b5485daae5330a3d5194a8,
+        type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
       value: 0.32
       objectReference: {fileID: 0}
@@ -40885,6 +40922,26 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 110854885014971486, guid: e2c59306d1c646b7815d1655a8dcf51f,
+        type: 3}
+      propertyPath: m_Size.x
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: e2c59306d1c646b7815d1655a8dcf51f,
+        type: 3}
+      propertyPath: m_Size.y
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: e2c59306d1c646b7815d1655a8dcf51f,
+        type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 0.63
+      objectReference: {fileID: 0}
+    - target: {fileID: 110854885014971486, guid: e2c59306d1c646b7815d1655a8dcf51f,
+        type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 0.62
+      objectReference: {fileID: 0}
     - target: {fileID: 5137998611744605229, guid: e2c59306d1c646b7815d1655a8dcf51f,
         type: 3}
       propertyPath: m_RootOrder
@@ -41122,3 +41179,33 @@ MonoBehaviour:
   lifetime: 0.9
   fadeDuration: 0.5
   killerDirectionBias: 0.3
+--- !u!114 &8676603727325829693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642864541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae33542ea3c6afc44acdbb8efdcf3254, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normalFacingOffset: 0
+  apexFacingOffset: 0
+  apexSizeMultiplier: 1
+--- !u!114 &8676603727325829696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1266920394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae33542ea3c6afc44acdbb8efdcf3254, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normalFacingOffset: 0
+  apexFacingOffset: 0
+  apexSizeMultiplier: 1

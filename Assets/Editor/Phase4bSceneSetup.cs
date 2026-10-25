@@ -20,6 +20,8 @@ public static class Phase4bSceneSetup
             throw new InvalidOperationException("Open a saved gameplay scene with exactly one configured hunt manager and spawn controller.");
         var manager = managers[0];
         if (!manager.ValidateConfiguration(out string error)) throw new InvalidOperationException(error);
+        var barSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/PrototypeSquare.png");
+        if (barSprite == null) throw new InvalidOperationException("Keep Assets/Art/PrototypeSquare.png imported as a Sprite for the rectangular progress bars.");
         var players = new PlayerCombatant[3];
         var outlines = new SpriteRenderer[3];
         for (int i = 0; i < 3; i++)
@@ -30,8 +32,8 @@ public static class Phase4bSceneSetup
             outlines[i] = aura != null ? aura.GetComponent<SpriteRenderer>() : null;
             var body = players[i].GetComponent<SpriteRenderer>();
             if (players[i].gameObject.scene != scene || outlines[i] == null || body.sprite == null || body.sharedMaterial == null
-                || body.drawMode != SpriteDrawMode.Simple || body.sprite.bounds.center.sqrMagnitude > .00001f)
-                throw new InvalidOperationException("Each player needs its existing aura and a centered Simple square sprite with a shared material.");
+                || body.drawMode != SpriteDrawMode.Simple)
+                throw new InvalidOperationException("Each player needs its existing aura and a Simple player sprite with a shared material.");
             var existingBar = players[i].transform.Find("ApexTransformBar");
             if (existingBar != null && (existingBar.GetComponent<SpriteRenderer>() == null
                 || (existingBar.Find("Fill") != null && existingBar.Find("Fill").GetComponent<SpriteRenderer>() == null)))
@@ -54,8 +56,8 @@ public static class Phase4bSceneSetup
         for (int i = 0; i < 3; i++)
         {
             var source = players[i].GetComponent<SpriteRenderer>();
-            backgrounds[i] = SpriteChild(players[i].transform, "ApexTransformBar", source, new Color(.18f, .18f, .22f, 1));
-            fills[i] = SpriteChild(backgrounds[i].transform, "Fill", source, new Color(1, .188f, .188f, 1));
+            backgrounds[i] = SpriteChild(players[i].transform, "ApexTransformBar", source, barSprite, new Color(.18f, .18f, .22f, 1));
+            fills[i] = SpriteChild(backgrounds[i].transform, "Fill", source, barSprite, new Color(1, .188f, .188f, 1));
             Undo.RecordObjects(new UnityEngine.Object[] { backgrounds[i], fills[i] }, "Hide transformation bars");
             backgrounds[i].enabled = fills[i].enabled = false;
         }
@@ -99,16 +101,21 @@ public static class Phase4bSceneSetup
         Debug.Log("PHASE4B_SETUP_OK: black/red Apex, overhead progress bars, and one expanding warning ring configured. Ctrl+S, then follow docs/4b steps.md. Existing timing and tuning preserved.");
     }
 
-    private static SpriteRenderer SpriteChild(Transform parent, string name, SpriteRenderer source, Color color)
+    private static SpriteRenderer SpriteChild(Transform parent, string name, SpriteRenderer source, Sprite square, Color color)
     {
         var child = parent.Find(name);
-        if (child != null) return child.GetComponent<SpriteRenderer>();
+        if (child != null)
+        {
+            var existing = child.GetComponent<SpriteRenderer>();
+            Undo.RecordObject(existing, "Use rectangular progress bar sprite"); existing.sprite = square;
+            return existing;
+        }
         var obj = new GameObject(name);
         Undo.RegisterCreatedObjectUndo(obj, "Create transformation bar");
         obj.transform.SetParent(parent, false);
         obj.layer = source.gameObject.layer;
         var renderer = Undo.AddComponent<SpriteRenderer>(obj);
-        renderer.sprite = source.sprite;
+        renderer.sprite = square;
         renderer.sharedMaterial = source.sharedMaterial;
         renderer.color = color;
         renderer.sortingLayerID = source.sortingLayerID;

@@ -59,10 +59,12 @@ public sealed class PlayerDeathBurst : MonoBehaviour
     public void Play(Vector2 killerPosition)
     {
         if (!ready || played || !isActiveAndEnabled) return;
+        var facing = GetComponent<PlayerVisualFacing>();
+        if (facing != null && facing.isActiveAndEnabled) source = facing.VisibleRenderer;
         played = true;
         age = 0;
         tint = source.color;
-        rotation = transform.rotation;
+        rotation = source.transform.rotation;
         Bounds bounds = source.sprite.bounds;
         Vector3 center = bounds.center;
         if (source.flipX) center.x = -center.x;
@@ -74,11 +76,12 @@ public sealed class PlayerDeathBurst : MonoBehaviour
             int x = i % 3 - 1, y = i / 3 - 1;
             Vector3 offset = new Vector3(x * bounds.size.x / 3f, y * bounds.size.y / 3f, 0);
             // Account for non-centered pivots: the scaled piece has its own scaled center.
-            piece.transform.localPosition = center * (2f / 3f) + offset;
-            piece.transform.localRotation = Quaternion.identity;
-            piece.transform.localScale = Vector3.one / 3f;
+            piece.transform.position = source.transform.TransformPoint(center * (2f / 3f) + offset);
+            piece.transform.rotation = rotation;
+            Vector3 sourceScale = source.transform.lossyScale, parentScale = transform.lossyScale;
+            piece.transform.localScale = new Vector3(sourceScale.x / parentScale.x / 3, sourceScale.y / parentScale.y / 3, 1);
             origins[i] = piece.transform.position;
-            Vector2 radial = transform.TransformVector(offset);
+            Vector2 radial = source.transform.TransformVector(offset);
             if (radial.sqrMagnitude < .000001f) radial = Random.insideUnitCircle;
             if (radial.sqrMagnitude < .000001f) radial = Vector2.right;
             Vector2 direction = radial.normalized + away * killerDirectionBias + Random.insideUnitCircle * .15f;

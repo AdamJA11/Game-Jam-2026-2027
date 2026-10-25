@@ -56,6 +56,8 @@ public sealed class PlayerCombatant : MonoBehaviour
             hitbox.enabled = false;
             body.simulated = false;
             visual.enabled = false;
+            var facing = GetComponent<PlayerVisualFacing>();
+            if (facing != null) facing.HideForElimination();
             follow.HoldDeathViewAndShake(playerId);
         }
         if (alive)
