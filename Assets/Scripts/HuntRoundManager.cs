@@ -33,6 +33,8 @@ public sealed class HuntRoundManager : MonoBehaviour
     public bool GameplayAvailable => !failed && !verificationSuspended && Rules != null;
     public void ConfigureDoor(EscapeDoor door) { escapeDoor = door; }
     public PlayerCombatant GetPlayer(int id) => players != null && id >= 0 && id < players.Length ? players[id] : null;
+    public void CancelCameraShakes()
+    { for (int i = 0; i < 3; i++) if (GetPlayer(i) != null) GetPlayer(i).CancelCameraShake(); }
     public Vector2 GetKillerPosition(int victimId)
     {
         int killer = Rules != null && victimId >= 0 && victimId < 3 ? Rules.KilledBy(victimId) : -1;
