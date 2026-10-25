@@ -107,6 +107,16 @@ public sealed class LocalPlayerCameraFollow : MonoBehaviour
         return new Vector3(x, y, -10f);
     }
 
+    public Vector3 GetUnshakenPosition()
+    {
+        if (view == null) view = GetComponent<Camera>();
+        if (!AutomaticFollowSuspended) return GetFollowPosition(view.orthographicSize, view.aspect);
+        if (!holdingView || !hasBasePose) return transform.position;
+        return new Vector3(
+            DeathCameraShakeState.ClampAxis(basePose.x, mapBounds.xMin, mapBounds.xMax, view.orthographicSize * view.aspect),
+            DeathCameraShakeState.ClampAxis(basePose.y, mapBounds.yMin, mapBounds.yMax, view.orthographicSize), basePose.z);
+    }
+
     private void RenderPose()
     {
         if (!hasBasePose || view == null) return;

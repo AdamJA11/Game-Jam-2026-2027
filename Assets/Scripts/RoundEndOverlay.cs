@@ -78,6 +78,7 @@ public sealed class RoundEndOverlay : MonoBehaviour
     private void ShowOverlay()
     {
         roundManager.CancelCameraShakes();
+        roundManager.CancelKillClaws();
         int winner = roundManager.Rules.WinnerId;
         resultText.text = RoundEndState.ResultText(winner, roundManager.Rules.Outcome);
         resultText.color = winner < 0 ? Color.white : roundManager.GetPlayerColor(winner);
