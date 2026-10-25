@@ -11,18 +11,24 @@ public sealed class RoundEndOverlay : MonoBehaviour
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button continueButton;
-    [SerializeField] private MapRotation mapRotation;
+    [SerializeField] private EscapeStoryPresenter escapeStory;
     [SerializeField] private string mainMenuScenePath = "Assets/Scenes/Menu_scene.unity";
     [SerializeField] private Text errorText;
     [SerializeField, Min(0)] private float resultRevealDelay = .6f;
     private readonly RoundEndState state = new RoundEndState();
     private readonly RoundEndReveal reveal = new RoundEndReveal();
     private bool valid;
+    private readonly EscapeStoryState storyState = new EscapeStoryState();
+    private double storyDeadline;
+
+    public void ConfigureEscapeStory(EscapeStoryPresenter presenter) { escapeStory = presenter; }
 
     public bool IsVisible => state.Visible;
     public bool IsReloading => state.IsReloading;
     public float ResultRevealDelay => resultRevealDelay;
-    public void ConfigureRotation(MapRotation rotation, Button button) { mapRotation = rotation; continueButton = button; }
+    // Keep the earlier scene setup API compatible; Continue no longer uses map rotation.
+    public void ConfigureRotation(MapRotation rotation, Button button) { continueButton = button; }
+    public void ConfigureContinue(Button button) { continueButton = button; }
 
     public void Configure(HuntRoundManager manager, GameObject panel, Text result, Button button, Text error, Button menuButton = null)
     { roundManager = manager; overlayPanel = panel; resultText = result; restartButton = button; errorText = error; mainMenuButton = menuButton; }
@@ -63,6 +69,8 @@ public sealed class RoundEndOverlay : MonoBehaviour
 
     private void OnDisable()
     {
+        if (escapeStory != null) escapeStory.Cancel();
+        storyState.Finish(); // Re-enable returns to results; it must not issue a load while disabled.
         if (continueButton != null) continueButton.onClick.RemoveListener(OnContinueButtonClicked);
         if (restartButton != null) restartButton.onClick.RemoveListener(OnRestartButtonClicked);
         if (mainMenuButton != null) mainMenuButton.onClick.RemoveListener(OnMainMenuButtonClicked);
@@ -71,6 +79,11 @@ public sealed class RoundEndOverlay : MonoBehaviour
     private void Update()
     {
         if (!valid || roundManager.Rules == null) return;
+        if (storyState.Playing && (escapeStory == null || !escapeStory.isActiveAndEnabled || Time.unscaledTimeAsDouble >= storyDeadline))
+        {
+            Debug.LogWarning("Phase 3e presentation interrupted or timed out; showing ending actions.", this);
+            FinishEscapeStory();
+        }
         if (reveal.Observe(roundManager.Rules.State == HuntRules.Phase.RoundOver, Time.timeAsDouble, resultRevealDelay)
             && state.Observe(roundManager.Rules.State)) ShowOverlay();
     }
@@ -81,6 +94,8 @@ public sealed class RoundEndOverlay : MonoBehaviour
         roundManager.CancelKillClaws();
         int winner = roundManager.Rules.WinnerId;
         resultText.text = RoundEndState.ResultText(winner, roundManager.Rules.Outcome);
+        if (storyState.Completed && roundManager.Rules.Outcome == HuntRules.Result.EscapedThroughDoor)
+            resultText.text = "You escaped. They didn't.\n" + resultText.text;
         resultText.color = winner < 0 ? Color.white : roundManager.GetPlayerColor(winner);
         SetButtonsInteractable(!state.IsReloading);
         overlayPanel.SetActive(true);
@@ -90,11 +105,9 @@ public sealed class RoundEndOverlay : MonoBehaviour
 
     private void OnRestartButtonClicked()
     {
-        // Reload the scene owning this overlay, never a menu or ambiguous same-named scene.
-        Scene gameplay = gameObject.scene;
-        int index = SceneUtility.GetBuildIndexByScenePath(gameplay.path);
-        LoadScene(gameplay.IsValid() && !string.IsNullOrEmpty(gameplay.path) ? index : -1,
-            "This gameplay scene is not enabled in Build Settings. Add it, then try again.");
+        // Fresh Map A instance reruns its WFC generator and resets all round state.
+        LoadScene(SceneUtility.GetBuildIndexByScenePath(MapRotation.MapAPath),
+            "Map A (SplitScreenTest) is not enabled in Build Settings. Add it, then try again.");
     }
 
     private void OnMainMenuButtonClicked()
@@ -105,14 +118,45 @@ public sealed class RoundEndOverlay : MonoBehaviour
 
     private void OnContinueButtonClicked()
     {
-        string destination = mapRotation == null ? null : mapRotation.Next(gameObject.scene.path);
-        LoadScene(string.IsNullOrEmpty(destination) ? -1 : SceneUtility.GetBuildIndexByScenePath(destination),
-            "Continue map is missing, unregistered, or not part of this rotation. Check Phase 3c setup.");
+        if (!valid || storyState.Playing || state.IsReloading || !state.Visible || roundManager.Rules == null
+            || roundManager.Rules.State != HuntRules.Phase.RoundOver) return;
+        var rules = roundManager.Rules;
+        if (storyState.TryBegin(rules.Outcome, rules.WinnerId, rules.ApexId))
+        {
+            bool started = false;
+            try
+            {
+                var player = roundManager.GetPlayer(storyState.Winner);
+                var renderer = player == null ? null : player.GetComponent<SpriteRenderer>();
+                if (escapeStory != null && renderer != null)
+                {
+                    roundManager.CancelCameraShakes(); roundManager.CancelKillClaws();
+                    started = escapeStory.TryPlay(renderer.sprite, roundManager.GetPlayerColor(storyState.Winner), FinishEscapeStory);
+                }
+                if (started)
+                {
+                    storyDeadline = Time.unscaledTimeAsDouble + escapeStory.Duration + 2;
+                    SetButtonsInteractable(false); overlayPanel.SetActive(false);
+                    return;
+                }
+            }
+            catch (Exception error) { Debug.LogException(error, this); }
+            Debug.LogWarning("Phase 3e unavailable; showing ending actions. Run Phase 3e setup on Map A.", this);
+            FinishEscapeStory(); return;
+        }
+    }
+
+    private void FinishEscapeStory()
+    {
+        if (!storyState.Finish()) return;
+        if (escapeStory != null) escapeStory.Cancel();
+        errorText.text = string.Empty;
+        ShowOverlay();
     }
 
     private void LoadScene(int index, string missingSceneMessage)
     {
-        if (!valid || state.IsReloading || !state.Visible || roundManager.Rules == null
+        if (!valid || storyState.Playing || state.IsReloading || !state.Visible || roundManager.Rules == null
             || roundManager.Rules.State != HuntRules.Phase.RoundOver) return;
         if (index < 0 || !Application.CanStreamedLevelBeLoaded(index))
         {
@@ -137,6 +181,7 @@ public sealed class RoundEndOverlay : MonoBehaviour
     private void LoadingFailed(string message)
     {
         state.ReloadFailed();
+        if (overlayPanel != null) overlayPanel.SetActive(true);
         SetButtonsInteractable(true);
         errorText.text = message;
         Debug.LogError("RoundEndOverlay: " + message, this);
@@ -148,11 +193,10 @@ public sealed class RoundEndOverlay : MonoBehaviour
         if (mainMenuButton != null) mainMenuButton.interactable = interactable;
         if (continueButton != null)
         {
-            string next = mapRotation == null ? null : mapRotation.Next(gameObject.scene.path);
-            bool available = !string.IsNullOrEmpty(next) && SceneUtility.GetBuildIndexByScenePath(next) >= 0 && Application.CanStreamedLevelBeLoaded(next);
+            var rules = roundManager.Rules;
+            bool available = rules != null && storyState.CanBegin(rules.Outcome, rules.WinnerId, rules.ApexId);
+            continueButton.gameObject.SetActive(available);
             continueButton.interactable = interactable && available;
-            if (interactable && !available && errorText != null)
-                errorText.text = "Continue unavailable: configure and enable both Phase 3c maps. Restart and Main Menu remain available.";
         }
     }
 }
