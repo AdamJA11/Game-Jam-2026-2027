@@ -11,8 +11,9 @@ public static class Phase4SceneSetup
     public static void Setup()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "SplitScreenTest")
-            throw new InvalidOperationException("Open SplitScreenTest first.");
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (sceneName != "SplitScreenTest" && sceneName != "SplitScreenMapB")
+            throw new InvalidOperationException("Open SplitScreenTest or SplitScreenMapB first.");
         ConfigureCurrentScene();
         EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());

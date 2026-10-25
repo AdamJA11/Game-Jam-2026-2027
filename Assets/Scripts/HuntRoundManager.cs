@@ -8,12 +8,46 @@ public sealed class HuntRoundManager : MonoBehaviour
     [SerializeField] private PlayerCombatant[] players = new PlayerCombatant[3];
     [SerializeField] private Text[] statusLabels = new Text[3];
     [SerializeField, Min(1f)] private float apexSpeedMultiplier = 1.35f;
+    [SerializeField] private EscapeDoor escapeDoor;
+    [Header("Action sounds")]
+    [SerializeField] private AudioSource actionAudioSource;
+    [SerializeField] private AudioClip killSound = null;
+    [SerializeField] private AudioClip apexTransformSound = null;
+    [SerializeField, Range(0, 1)] private float killSoundVolume = .7f;
+    [SerializeField, Range(0, 1)] private float apexTransformSoundVolume = .7f;
+    private readonly HuntAudioEvents audioEvents = new HuntAudioEvents();
     private readonly string[] identityHex = new string[3];
+    private readonly Color[] identityColors = new Color[3];
+    private bool identityCaptured;
+    private ApexTransformationPresentation transformation;
+    private RandomItemCoordinator items;
+    private bool labelsInitialized;
+    private HuntRules.Phase labelPhase;
+    private int labelAliveMask, labelApex, labelWinner, labelCountdown;
+    private bool labelWave, labelDoor;
     private int pendingContacts;
     private int touchingContacts;
     private bool failed;
     private bool verificationSuspended;
     public HuntRules Rules { get; private set; }
+    public bool GameplayAvailable => !failed && !verificationSuspended && Rules != null;
+    public void ConfigureDoor(EscapeDoor door) { escapeDoor = door; }
+    public PlayerCombatant GetPlayer(int id) => players != null && id >= 0 && id < players.Length ? players[id] : null;
+    public Vector2 GetKillerPosition(int victimId)
+    {
+        int killer = Rules != null && victimId >= 0 && victimId < 3 ? Rules.KilledBy(victimId) : -1;
+        if (players != null && killer >= 0 && killer < players.Length && players[killer] != null)
+            return players[killer].transform.position;
+        return players != null && victimId >= 0 && victimId < players.Length && players[victimId] != null
+            ? (Vector2)players[victimId].transform.position : Vector2.zero;
+    }
+    public Color GetPlayerColor(int id)
+    {
+        if (id < 0 || id >= 3 || players == null || id >= players.Length || players[id] == null) return Color.white;
+        if (identityCaptured) return identityColors[id];
+        var renderer = players[id].GetComponent<SpriteRenderer>();
+        return renderer == null ? Color.white : renderer.color;
+    }
 
     public void Configure(CameraIntroduction intro, PlayerCombatant[] characters, Text[] labels)
     { introduction = intro; players = characters; statusLabels = labels; }
@@ -24,10 +58,17 @@ public sealed class HuntRoundManager : MonoBehaviour
         if (!ValidateConfiguration(out string error)) { Fail(error); return; }
         for (int i = 0; i < 3; i++)
         {
-            identityHex[i] = ColorUtility.ToHtmlStringRGB(players[i].GetComponent<SpriteRenderer>().color);
+            identityColors[i] = players[i].GetComponent<SpriteRenderer>().color;
+            identityHex[i] = ColorUtility.ToHtmlStringRGB(identityColors[i]);
             statusLabels[i].supportRichText = true;
             statusLabels[i].color = Color.white;
         }
+        identityCaptured = true;
+        transformation = GetComponent<ApexTransformationPresentation>();
+        items = GetComponent<RandomItemCoordinator>();
+        if (actionAudioSource == null) actionAudioSource = GetComponent<AudioSource>();
+        if (actionAudioSource == null || killSound == null || apexTransformSound == null)
+            Debug.LogWarning("HuntRoundManager: action audio is incomplete. Assign Action Audio Source, Kill Sound, and Apex Transform Sound. Gameplay will continue.", this);
         ApplyState();
     }
 
@@ -65,6 +106,7 @@ public sealed class HuntRoundManager : MonoBehaviour
     {
         if (failed || verificationSuspended) return;
         StartWhenReady();
+        if (failed) return;
         UpdateLabels();
     }
 
@@ -76,11 +118,22 @@ public sealed class HuntRoundManager : MonoBehaviour
         // Remember continuing pairs even when sleeping bodies stop producing stay callbacks.
         int contacts = pendingContacts | touchingContacts;
         pendingContacts = 0;
-        if (Rules.State == HuntRules.Phase.Transforming)
-            Rules.AdvanceTransformation(Time.fixedDeltaTime);
-        else
-            Rules.ResolveContacts(contacts);
+        Rules.ResolveStep(contacts, escapeDoor != null ? escapeDoor.Occupants() : 0, Time.fixedDeltaTime);
+        PlayActionSounds();
         ApplyState();
+        if (items != null) items.ResolvePickups();
+    }
+
+    private void PlayActionSounds()
+    {
+        audioEvents.Observe(Rules, out int kills, out bool transformationStarted);
+        if (actionAudioSource == null || !actionAudioSource.isActiveAndEnabled) return;
+        // PlayOneShot permits the first kill and transformation clips to overlap.
+        if (killSound != null)
+            for (int i = 0; i < kills; i++) actionAudioSource.PlayOneShot(killSound, Mathf.Clamp01(killSoundVolume));
+        if (transformationStarted && apexTransformSound != null)
+            actionAudioSource.PlayOneShot(apexTransformSound, Mathf.Clamp01(apexTransformSoundVolume));
+        // Never stop on Transforming -> FinalChase or RoundOver. The source owns the natural tail.
     }
 
     private void StartWhenReady()
@@ -93,6 +146,7 @@ public sealed class HuntRoundManager : MonoBehaviour
 
     private void ApplyState()
     {
+        if (items != null) items.SyncState();
         for (int i = 0; i < 3; i++)
         {
             bool apex = Rules.ApexId == i;
@@ -102,14 +156,26 @@ public sealed class HuntRoundManager : MonoBehaviour
             if (Rules.State == HuntRules.Phase.RoundOver)
                 players[i].HoldCamera();
         }
+        if (transformation != null) transformation.Observe();
         UpdateLabels();
     }
 
     private void UpdateLabels()
     {
+        bool wave = transformation != null && transformation.WaveActive;
+        bool door = escapeDoor != null && escapeDoor.Configured;
+        int countdown = Rules.State == HuntRules.Phase.Transforming ? ApexTransformationMath.CountdownTenths(Rules.TransformRemaining) : 0;
+        if (labelsInitialized && labelPhase == Rules.State && labelAliveMask == Rules.AliveMask
+            && labelApex == Rules.ApexId && labelWinner == Rules.WinnerId && labelCountdown == countdown && labelWave == wave && labelDoor == door) return;
+        labelsInitialized = true;
+        labelPhase = Rules.State; labelAliveMask = Rules.AliveMask; labelApex = Rules.ApexId;
+        labelWinner = Rules.WinnerId; labelCountdown = countdown; labelWave = wave; labelDoor = door;
         for (int i = 0; i < 3; i++)
         {
-            statusLabels[i].text = HuntPresentation.Status(Rules, i, identityHex);
+            statusLabels[i].text = door && Rules.IsAlive(i) && i != Rules.ApexId
+                && (Rules.State == HuntRules.Phase.Transforming || Rules.State == HuntRules.Phase.FinalChase)
+                ? "OPEN THE ESCAPE DOOR\nAVOID APEX " + HuntPresentation.Identity(Rules.ApexId, identityHex)
+                : HuntPresentation.Status(Rules, i, identityHex, wave);
         }
     }
 
