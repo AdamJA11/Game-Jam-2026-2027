@@ -38,6 +38,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        PlayerVisualFacing.For(gameObject);
     }
 
     private void Update()
@@ -54,12 +55,7 @@ public sealed class TopDownPlayerMovement : MonoBehaviour
         
         direction = ReadDirection(x, y);
 
-        // --- NOUVEAU : Rotation du joueur ---
-        if (direction != Vector2.zero)
-        {
-            // Oriente le sommet du sprite vers la direction du mouvement
-            transform.up = direction; 
-        }
+        // PlayerVisualFacing turns only artwork. The Rigidbody/collider root stays stable.
     }
 
     private static Vector2 ReadDirection(float x, float y)

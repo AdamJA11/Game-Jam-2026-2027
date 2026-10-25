@@ -10,6 +10,8 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
     [SerializeField] private SpriteRenderer[] barBackgrounds = new SpriteRenderer[3];
     [SerializeField] private SpriteRenderer[] barFills = new SpriteRenderer[3];
     [SerializeField] private LineRenderer ring;
+    [SerializeField] private Sprite apexSprite = null;
+    [SerializeField] private bool showSpriteOutline = false;
     [SerializeField] private Rect playableBounds = new Rect(-20, -12, 40, 24);
     [SerializeField] private Color apexBodyColor = new Color(.082f, .063f, .082f, 1);
     [SerializeField] private Color apexRedColor = new Color(1, .188f, .188f, 1);
@@ -19,9 +21,11 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
     [SerializeField, Min(.01f)] private float barHeight = .12f;
     [SerializeField, Min(0)] private float barGap = .2f;
     private readonly SpriteRenderer[] bodies = new SpriteRenderer[3];
+    private readonly PlayerVisualFacing[] visualFacings = new PlayerVisualFacing[3];
     private readonly TopDownPlayerMovement[] movements = new TopDownPlayerMovement[3];
     private readonly Color[] originalBody = new Color[3];
     private readonly Color[] originalAura = new Color[3];
+    private readonly bool[] originalAuraEnabled = new bool[3];
     private readonly Vector3[] unitCircle = new Vector3[RingSegments];
     private readonly ApexWarningTimeline timeline = new ApexWarningTimeline();
     private bool initialized;
@@ -31,6 +35,7 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
 
     public bool WaveActive => initialized && round != null && round.Rules != null && enabled && gameObject.activeInHierarchy
         && timeline.Active(round.Rules.State, Time.timeAsDouble, pulseDuration);
+    public void ConfigureApexSprite(Sprite sprite) { apexSprite = sprite; }
 
     public void Configure(HuntRoundManager manager, PlayerCombatant[] characters, SpriteRenderer[] outlines,
         SpriteRenderer[] backgrounds, SpriteRenderer[] fills, LineRenderer warningRing, Rect bounds)
@@ -82,6 +87,8 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
                 movements[i] = players[i].GetComponent<TopDownPlayerMovement>();
                 originalBody[i] = bodies[i].color;
                 originalAura[i] = auras[i].color;
+                originalAuraEnabled[i] = auras[i].enabled;
+                visualFacings[i] = PlayerVisualFacing.For(players[i].gameObject);
             }
             for (int i = 0; i < RingSegments; i++)
             {
@@ -97,7 +104,8 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
         if (rules.State == HuntRules.Phase.RoundOver) { timeline.Cancel(); Hide(); return; }
         if (rules.ApexId < 0 || !timeline.TryStart(rules.State, Time.timeAsDouble)) return;
         origin = players[rules.ApexId].transform.position;
-        startRadius = Mathf.Max(bodies[rules.ApexId].bounds.extents.x, bodies[rules.ApexId].bounds.extents.y) + .15f;
+        Bounds apexBounds = visualFacings[rules.ApexId].VisibleBounds;
+        startRadius = Mathf.Max(apexBounds.extents.x, apexBounds.extents.y) + .15f;
         float survivorSpeed = 0;
         for (int i = 0; i < 3; i++) if (rules.IsAlive(i) && i != rules.ApexId)
             survivorSpeed = Mathf.Max(survivorSpeed, movements[i].EffectiveMoveSpeed);
@@ -114,8 +122,12 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
         {
             bool apex = rules.IsAlive(i) && rules.ApexId == i;
             bool transforming = apex && rules.State == HuntRules.Phase.Transforming;
-            bodies[i].color = apex ? Color.Lerp(originalBody[i], apexBodyColor, transforming ? progress : 1) : originalBody[i];
+            bool useArtwork = apexSprite != null && visualFacings[i] != null && visualFacings[i].isActiveAndEnabled;
+            bodies[i].color = apex && !useArtwork ? Color.Lerp(originalBody[i], apexBodyColor, transforming ? progress : 1) : originalBody[i];
+            if (visualFacings[i] != null && visualFacings[i].isActiveAndEnabled)
+                visualFacings[i].PresentApex(useArtwork ? apexSprite : null, apex ? (transforming ? progress : 1) : 0, auras[i]);
             auras[i].color = apex ? apexRedColor : originalAura[i];
+            auras[i].enabled = originalAuraEnabled[i] && (!useArtwork || showSpriteOutline);
             barBackgrounds[i].enabled = transforming;
             barFills[i].enabled = transforming && progress > 0;
             if (transforming) PositionBar(i, progress);
@@ -134,7 +146,7 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
     private void PositionBar(int i, float progress)
     {
         var background = barBackgrounds[i];
-        Bounds bounds = bodies[i].bounds;
+        Bounds bounds = visualFacings[i] != null && visualFacings[i].isActiveAndEnabled ? visualFacings[i].VisibleBounds : bodies[i].bounds;
         background.transform.position = new Vector3(bounds.center.x, bounds.max.y + barGap + barHeight / 2, players[i].transform.position.z);
         background.transform.rotation = Quaternion.identity;
         Vector3 parentScale = background.transform.parent.lossyScale;
@@ -163,6 +175,8 @@ public sealed class ApexTransformationPresentation : MonoBehaviour
         {
             if (bodies[i] != null) bodies[i].color = originalBody[i];
             if (auras[i] != null) auras[i].color = originalAura[i];
+            if (auras[i] != null) auras[i].enabled = originalAuraEnabled[i];
+            if (visualFacings[i] != null && visualFacings[i].isActiveAndEnabled) visualFacings[i].PresentApex(null, 0, auras[i]);
         }
     }
 }
