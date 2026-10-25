@@ -60,6 +60,7 @@ public static class SplitScreenSceneBuilder
         ConfigureRandomSpawns();
         ConfigureCameraIntroduction();
         Phase4SceneSetup.ConfigureCurrentScene();
+        Phase5SceneSetup.ConfigureCurrentScene();
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         Debug.Log("PHASE3_BUILD_OK: " + path);

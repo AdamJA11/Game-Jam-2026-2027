@@ -14,6 +14,12 @@ public sealed class HuntRoundManager : MonoBehaviour
     private bool failed;
     private bool verificationSuspended;
     public HuntRules Rules { get; private set; }
+    public Color GetPlayerColor(int id)
+    {
+        if (id < 0 || id >= 3 || players == null || id >= players.Length || players[id] == null) return Color.white;
+        var renderer = players[id].GetComponent<SpriteRenderer>();
+        return renderer == null ? Color.white : renderer.color;
+    }
 
     public void Configure(CameraIntroduction intro, PlayerCombatant[] characters, Text[] labels)
     { introduction = intro; players = characters; statusLabels = labels; }
